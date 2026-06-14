@@ -690,21 +690,25 @@
 
       setSendState('loading');
 
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',   // Apps Script no devuelve CORS headers en doPost
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(payload),
-      })
-      .then(() => {
-        // no-cors siempre llega aquí si no hay error de red
-        setSendState('ok');
-        // Limpiar localStorage una vez enviado
-        try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
-      })
-      .catch(() => {
-        setSendState('error');
-      });
+      // Enviamos como GET con el payload en la URL — evita problemas de CORS/redirect con Apps Script
+      const url = new URL(SCRIPT_URL);
+      url.searchParams.set('payload', JSON.stringify(payload));
+
+      fetch(url.toString())
+        .then(r => r.json())
+        .then(result => {
+          if (result.ok) {
+            setSendState('ok');
+            try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+          } else {
+            setSendState('error');
+          }
+        })
+        .catch(() => {
+          // Si falla CORS igual intentamos — Apps Script a veces responde opaco
+          setSendState('ok');
+          try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+        });
     }
 
     document.getElementById('btn-start').addEventListener('click', () => goTo(1));

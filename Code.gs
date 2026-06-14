@@ -49,8 +49,22 @@ function doPost(e) {
   }
 }
 
-// Permite que el form haga un preflight OPTIONS (CORS)
+// Recibe respuestas del formulario vía GET (evita problemas de CORS/redirect con doPost)
 function doGet(e) {
+  if (e.parameter.payload) {
+    try {
+      const data = JSON.parse(e.parameter.payload);
+      guardarRespuesta(data);
+      enviarNotificacion(data);
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    } catch (err) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, error: err.message }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
   return ContentService
     .createTextOutput(JSON.stringify({ ok: true, status: 'Arte/Visual encuesta activa' }))
     .setMimeType(ContentService.MimeType.JSON);
