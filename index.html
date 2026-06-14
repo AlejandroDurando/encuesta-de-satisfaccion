@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Encuesta de Experiencia — Arte/Visual</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500;1,9..144,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    :root {
+      --accent: #de0a14;
+      --ink: #181311;
+      --ink-soft: #6a5f5d;
+      --muted: #a0938f;
+      --line: rgba(24,19,17,0.10);
+    }
+    body {
+      background: #f2ecea;
+      font-family: 'Manrope', sans-serif;
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+    ::selection { background: rgba(222,10,20,0.18); }
+    textarea { font-family: 'Manrope', sans-serif; }
+
+    /* ── Keyframes ───────────────────────────────────────────────── */
+    @keyframes av-entrance {
+      from { transform: translateY(24px); opacity: 0; }
+      to   { transform: none; opacity: 1; }
+    }
+    @keyframes av-blob1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(60px,40px) scale(1.12); } }
+    @keyframes av-blob2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-50px,-30px) scale(1.1); } }
+    @keyframes av-blob3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-50px) scale(1.18); } }
+    @keyframes av-pulse {
+      0%,100% { box-shadow: 0 16px 40px -16px rgba(222,10,20,0.55); }
+      50%     { box-shadow: 0 22px 56px -12px rgba(222,10,20,0.8); }
+    }
+    /* Autonomous 3D float — runs on every device, no cursor required. */
+    @keyframes av-float {
+      0%   { transform: translateY(0px)  rotateX(0deg)    rotateY(0deg); }
+      20%  { transform: translateY(-10px) rotateX(1.6deg)  rotateY(-2deg); }
+      45%  { transform: translateY(-3px)  rotateX(-0.7deg) rotateY(2deg); }
+      70%  { transform: translateY(-12px) rotateX(1.1deg)  rotateY(0.6deg); }
+      100% { transform: translateY(0px)  rotateX(0deg)    rotateY(0deg); }
+    }
+    /* Shadow breathes with the float so it reads as real lift. */
+    @keyframes av-shadow {
+      0%,100% {
+        box-shadow: 0 26px 60px -34px rgba(70,16,16,0.38),
+                    0 6px 18px -10px rgba(70,16,16,0.20),
+                    0 1px 0 rgba(255,255,255,0.65) inset;
+      }
+      45% {
+        box-shadow: 0 52px 100px -40px rgba(70,16,16,0.46),
+                    0 14px 30px -14px rgba(70,16,16,0.22),
+                    0 1px 0 rgba(255,255,255,0.65) inset;
+      }
+    }
+    @keyframes av-logo-glow {
+      0%,100% { box-shadow: 0 10px 26px -12px rgba(222,10,20,0.32), 0 2px 6px rgba(0,0,0,0.05); }
+      50%     { box-shadow: 0 14px 34px -10px rgba(222,10,20,0.52), 0 2px 6px rgba(0,0,0,0.05); }
+    }
+
+    /* ── Root + atmosphere ───────────────────────────────────────── */
+    #av-root {
+      position: relative;
+      min-height: 100dvh;
+      width: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(120% 90% at 50% -10%, #fdfbfa 0%, #f1e9e7 55%, #e8dedb 100%);
+      padding: 104px 20px 70px;
+    }
+    #av-canvas {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      z-index: 1; pointer-events: none;
+    }
+    .av-blob { position: absolute; border-radius: 50%; pointer-events: none; z-index: 1; }
+    .av-blob-1 { width: 560px; height: 560px; left: -160px; top: -180px;
+      background: radial-gradient(circle, rgba(222,10,20,0.40), transparent 62%);
+      filter: blur(14px); animation: av-blob1 19s ease-in-out infinite; }
+    .av-blob-2 { width: 520px; height: 520px; right: -160px; bottom: -180px;
+      background: radial-gradient(circle, rgba(255,86,86,0.32), transparent 64%);
+      filter: blur(16px); animation: av-blob2 23s ease-in-out infinite; }
+    .av-blob-3 { width: 420px; height: 420px; left: 55%; top: 30%;
+      background: radial-gradient(circle, rgba(222,10,20,0.16), transparent 66%);
+      filter: blur(20px); animation: av-blob3 27s ease-in-out infinite; }
+
+    /* ── Progress bar ────────────────────────────────────────────── */
+    #av-progress-track {
+      position: fixed; top: 0; left: 0; right: 0; height: 3px;
+      background: rgba(222,10,20,0.10); z-index: 20;
+    }
+    #av-progress-fill {
+      height: 100%; width: 0%; background: var(--accent);
+      box-shadow: 0 0 12px rgba(222,10,20,0.6);
+      transition: width 0.55s cubic-bezier(.2,.7,.2,1);
+    }
+
+    /* ── Header + logo with presence ─────────────────────────────── */
+    #av-header {
+      position: fixed; top: 0; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 22px 30px; z-index: 15;
+    }
+    .av-logo-chip {
+      display: inline-flex; align-items: center;
+      padding: 12px 20px; border-radius: 16px;
+      background: rgba(255,255,255,0.78);
+      backdrop-filter: blur(12px) saturate(1.4);
+      -webkit-backdrop-filter: blur(12px) saturate(1.4);
+      border: 1px solid rgba(222,10,20,0.14);
+      animation: av-logo-glow 4.5s ease-in-out infinite;
+      transition: transform 0.25s ease;
+    }
+    .av-logo-chip:hover { transform: translateY(-2px); }
+    .av-logo-chip img {
+      height: 64px; width: auto; display: block;
+      filter: drop-shadow(0 3px 10px rgba(222,10,20,0.30));
+    }
+    #av-progress-label {
+      font-family: 'Manrope', sans-serif; font-weight: 800;
+      font-size: 12px; letter-spacing: 0.28em;
+      color: var(--muted); text-transform: uppercase;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────── */
+    #av-footer {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      text-align: center; padding: 16px 16px 18px;
+      font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 600;
+      letter-spacing: 0.05em; color: var(--muted); z-index: 14;
+      pointer-events: none;
+    }
+    #av-footer b { color: var(--accent); font-weight: 800; font-style: normal; }
+
+    /* ── Stage / float / card ────────────────────────────────────── */
+    #av-main { position: relative; z-index: 5; width: 100%; max-width: 720px; perspective: 1600px; }
+    #av-float {
+      animation: av-float 13s ease-in-out infinite;
+      will-change: transform;
+    }
+    #av-card {
+      position: relative;
+      width: 100%;
+      border-radius: 22px;
+      padding: clamp(30px, 5vw, 56px);
+      min-height: 452px;
+      display: flex; flex-direction: column; justify-content: center;
+      background:
+        linear-gradient(158deg, rgba(255,253,252,0.86), rgba(251,245,244,0.80));
+      backdrop-filter: blur(22px) saturate(1.35);
+      -webkit-backdrop-filter: blur(22px) saturate(1.35);
+      border: 1px solid rgba(255,255,255,0.75);
+      transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+      transition: transform 0.3s ease-out;
+      animation: av-shadow 13s ease-in-out infinite;
+      will-change: transform;
+    }
+    /* Hairline brand accent along the very top edge of the card. */
+    #av-card::before {
+      content: ''; position: absolute; top: 0; left: 26px; right: 26px; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent) 30%, var(--accent) 70%, transparent);
+      opacity: 0.55; border-radius: 2px;
+    }
+
+    /* ── Back button ─────────────────────────────────────────────── */
+    #av-back {
+      position: absolute; top: 22px; left: 22px;
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 8px 15px; border-radius: 100px;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.6);
+      cursor: pointer; font-family: 'Manrope', sans-serif;
+      font-size: 13px; font-weight: 600; color: var(--ink-soft);
+      white-space: nowrap; transition: all 0.2s ease;
+    }
+    #av-back:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Big editorial index numeral (watermark) ─────────────────── */
+    .av-index {
+      position: absolute; top: 16px; right: 26px;
+      font-family: 'Fraunces', serif; font-weight: 600;
+      font-size: clamp(96px, 15vw, 150px); line-height: 0.8;
+      color: rgba(222,10,20,0.07);
+      letter-spacing: -0.03em; pointer-events: none; user-select: none;
+    }
+
+    /* ── Screens ─────────────────────────────────────────────────── */
+    .av-screen { display: none; }
+    .av-screen.active {
+      display: block;
+      animation: av-entrance 0.6s cubic-bezier(.2,.75,.25,1) both;
+    }
+    #s1, #s2, #s3, #s4 { padding-top: 30px; }
+
+    /* ── Kicker (rule + label) ───────────────────────────────────── */
+    .av-kicker {
+      display: inline-flex; align-items: center; gap: 12px;
+    }
+    .av-kicker .rule {
+      width: 30px; height: 2px; background: var(--accent); border-radius: 2px; flex: none;
+    }
+    .av-kicker span.lbl {
+      font-family: 'Manrope', sans-serif; font-weight: 800;
+      font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    /* ── Headings (Fraunces editorial) ───────────────────────────── */
+    .av-h1 {
+      margin: 22px auto 0; max-width: 16ch;
+      font-family: 'Fraunces', serif; font-weight: 600;
+      font-optical-sizing: auto;
+      font-size: clamp(36px, 6vw, 62px); line-height: 1.02;
+      letter-spacing: -0.02em; color: var(--ink); text-wrap: balance;
+    }
+    .av-h1 em { font-style: italic; font-weight: 500; color: var(--accent); }
+    .av-h2 {
+      margin: 18px 0 0;
+      font-family: 'Fraunces', serif; font-weight: 600;
+      font-optical-sizing: auto;
+      font-size: clamp(27px, 4.2vw, 42px); line-height: 1.08;
+      letter-spacing: -0.015em; color: var(--ink); text-wrap: balance;
+    }
+    .av-h2 em { font-style: italic; font-weight: 500; color: var(--accent); }
+    .av-sub {
+      margin: 16px 0 0; max-width: 52ch;
+      font-size: 15.5px; line-height: 1.6; color: var(--ink-soft);
+    }
+
+    /* ── Intro ───────────────────────────────────────────────────── */
+    #s0 { text-align: center; }
+    #s0 .av-kicker { display: inline-flex; }
+    #s0 .av-intro-desc {
+      margin: 24px auto 0; max-width: 46ch;
+      font-size: clamp(15px, 1.9vw, 18px); line-height: 1.62; color: var(--ink-soft);
+      
+    }
+    #s0 .av-intro-desc strong { color: var(--ink); font-weight: 700; }
+    #s0 .av-start-wrap { margin-top: 38px; display: flex; justify-content: center; }
+    #s0 .av-note { margin-top: 20px; font-size: 12.5px; color: var(--muted); letter-spacing: 0.02em; }
+
+    /* ── Pill button ─────────────────────────────────────────────── */
+    .av-pill {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 15px 32px; border-radius: 100px; border: none; cursor: pointer;
+      background: var(--accent); color: #fff;
+      font-family: 'Manrope', sans-serif; font-weight: 700;
+      font-size: 15.5px; letter-spacing: 0.01em; white-space: nowrap;
+      box-shadow: 0 16px 40px -16px rgba(222,10,20,0.55);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+    .av-pill:hover { transform: translateY(-2px); box-shadow: 0 22px 50px -16px rgba(222,10,20,0.6); }
+    .av-pill:active { transform: translateY(0); }
+    .av-pill.av-pill-lg { padding: 18px 40px; font-size: 16.5px; animation: av-pulse 3.6s ease-in-out infinite; }
+    .av-pill.av-pill-send { padding: 17px 42px; font-size: 16.5px; }
+    .av-pill.av-pill-disabled {
+      cursor: not-allowed; background: rgba(24,19,17,0.10);
+      color: #9a9292; box-shadow: none;
+    }
+    .av-pill.av-pill-disabled:hover { transform: none; box-shadow: none; }
+
+    /* ── Scale 1–5 ───────────────────────────────────────────────── */
+    #s1 .av-scale-wrap {
+      margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+     
+    }
+    .av-scale-btn {
+      flex: 1 1 92px; min-width: 84px;
+      display: flex; flex-direction: column; align-items: center; gap: 9px;
+      padding: 18px 8px; border-radius: 16px; cursor: pointer;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.55);
+      color: var(--ink); font-family: 'Manrope', sans-serif;
+      transition: all 0.25s cubic-bezier(.2,.7,.2,1);
+    }
+    .av-scale-btn:hover { border-color: rgba(222,10,20,0.4); transform: translateY(-3px); }
+    .av-scale-btn.selected {
+      border-color: var(--accent); background: var(--accent); color: #fff;
+      transform: translateY(-6px) scale(1.05);
+      box-shadow: 0 16px 38px -12px rgba(222,10,20,0.5);
+    }
+    .av-scale-num { font-family: 'Fraunces', serif; font-weight: 600; font-size: 28px; line-height: 1; }
+    .av-scale-lbl { font-size: 11.5px; font-weight: 600; opacity: 0.85; text-align: center; line-height: 1.2; }
+    #s1 .av-hint { margin-top: 26px; text-align: center; font-size: 12.5px; color: var(--muted); }
+
+    /* ── Textarea ────────────────────────────────────────────────── */
+    .av-textarea {
+      margin-top: 26px; width: 100%; min-height: 148px; resize: vertical;
+      padding: 18px 20px; border-radius: 14px;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.65);
+      font-size: clamp(16px, 1.8vw, 18px); line-height: 1.55; color: var(--ink);
+      outline: none; transition: all 0.2s ease;
+    }
+    .av-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(222,10,20,0.12); background: rgba(255,255,255,0.85); }
+    .av-textarea-sm { min-height: 132px; }
+    .av-row-end { margin-top: 26px; display: flex; justify-content: flex-end; }
+    .av-row-between { margin-top: 26px; display: flex; align-items: center; justify-content: flex-end; gap: 18px; }
+    .av-skip { background: none; border: none; cursor: pointer; font-family: 'Manrope', sans-serif; font-size: 14px; font-weight: 600; color: var(--muted); }
+    .av-skip:hover { color: var(--ink-soft); }
+
+    /* ── Choices ─────────────────────────────────────────────────── */
+    #s3 .av-choices { margin-top: 28px; display: flex; flex-direction: column; gap: 11px; }
+    .av-choice-btn {
+      display: flex; align-items: center; gap: 15px; width: 100%; text-align: left;
+      padding: 17px 20px; border-radius: 14px; cursor: pointer;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.5);
+      transition: all 0.22s ease; color: var(--ink);
+      font-family: 'Manrope', sans-serif; font-size: clamp(15px,1.6vw,17px); font-weight: 600; line-height: 1.4;
+    }
+    .av-choice-btn:hover { border-color: rgba(222,10,20,0.35); transform: translateX(4px); }
+    .av-choice-btn.selected {
+      border-color: var(--accent); background: rgba(222,10,20,0.06);
+      box-shadow: 0 14px 32px -16px rgba(222,10,20,0.45); transform: translateX(6px);
+    }
+    .av-chip {
+      flex-shrink: 0; width: 34px; height: 34px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Fraunces', serif; font-weight: 600; font-size: 16px;
+      background: rgba(24,19,17,0.06); color: var(--ink-soft); transition: all 0.22s ease;
+    }
+    .av-choice-btn.selected .av-chip { background: var(--accent); color: #fff; }
+
+    /* ── Closing / summary ───────────────────────────────────────── */
+    #s5 { text-align: center; }
+    #s5 .av-check {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 66px; height: 66px; border-radius: 50%; background: var(--accent);
+      box-shadow: 0 18px 44px -14px rgba(222,10,20,0.7); color: #fff; font-size: 30px; line-height: 1;
+     
+    }
+    #s5 .av-thanks-head {
+      margin: 22px 0 0; font-family: 'Fraunces', serif; font-weight: 600;
+      font-size: clamp(30px, 5vw, 48px); line-height: 1.05; letter-spacing: -0.02em; color: var(--ink);
+     
+    }
+    #s5 .av-thanks-sub { margin: 14px auto 0; max-width: 44ch; font-size: clamp(15px,1.8vw,17px); line-height: 1.6; color: var(--ink-soft);  }
+    #s5 .av-summary {
+      margin-top: 30px; border-radius: 16px; border: 1px solid rgba(24,19,17,0.08);
+      background: rgba(255,255,255,0.5); overflow: hidden; text-align: left;
+    }
+    .av-summary-row { padding: 16px 22px; border-bottom: 1px solid rgba(24,19,17,0.07); }
+    .av-summary-row:last-child { border-bottom: none; }
+    .av-summary-label { font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+    .av-summary-value { margin-top: 5px; font-size: 16px; font-weight: 500; color: var(--ink); line-height: 1.5; }
+    .av-summary-value.bold { font-weight: 600; font-family: 'Fraunces', serif; font-size: 18px; }
+    #s5 .av-send-wrap { margin-top: 28px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    #s5 .av-restart { background: none; border: none; cursor: pointer; font-family: 'Manrope', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--muted); }
+    #s5 .av-restart:hover { color: var(--accent); }
+
+    /* ── Tablet ──────────────────────────────────────────────────── */
+    @media (max-width: 760px) {
+      #av-root { padding: 92px 16px 34px; }
+      #av-header { padding: 18px 20px; }
+      .av-logo-chip { padding: 11px 18px; }
+      .av-logo-chip img { height: 54px; }
+      #av-main { perspective: 1300px; }
+      #av-card { border-radius: 20px; min-height: 0; padding: 42px 24px 32px; }
+    }
+
+    /* ── Mobile ──────────────────────────────────────────────────── */
+    @media (max-width: 520px) {
+      #av-root { padding: 84px 12px 28px; }
+      #av-header { padding: 14px 14px; }
+      .av-logo-chip { padding: 9px 15px; border-radius: 14px; }
+      .av-logo-chip img { height: 46px; }
+      #av-progress-label { font-size: 10px; letter-spacing: 0.18em; }
+
+      #av-main { perspective: 1000px; }
+      #av-card { border-radius: 18px; padding: 40px 18px 28px; }
+
+      #av-back { top: 16px; left: 16px; padding: 7px 13px; font-size: 12px; }
+      #s1, #s2, #s3, #s4 { padding-top: 28px; }
+
+      .av-index { font-size: clamp(78px, 22vw, 110px); top: 12px; right: 18px; }
+      .av-h1 { font-size: clamp(32px, 9vw, 44px); max-width: none; }
+      .av-h2 { font-size: clamp(25px, 7vw, 34px); }
+      .av-kicker span.lbl { font-size: 11px; letter-spacing: 0.18em; }
+
+      #s1 .av-scale-wrap { gap: 7px; }
+      .av-scale-btn { flex: 1 1 0; min-width: 0; padding: 14px 4px; border-radius: 13px; }
+      .av-scale-num { font-size: 23px; }
+      .av-scale-lbl { font-size: 9.5px; }
+
+      .av-choice-btn { padding: 14px 15px; gap: 12px; }
+      .av-chip { width: 30px; height: 30px; font-size: 15px; }
+
+      .av-textarea { min-height: 128px; padding: 15px 16px; }
+      .av-textarea-sm { min-height: 116px; }
+
+      .av-pill { padding: 14px 28px; font-size: 15px; }
+      .av-pill.av-pill-lg { padding: 16px 32px; font-size: 16px; }
+      .av-pill.av-pill-send { padding: 15px 34px; font-size: 16px; width: 100%; justify-content: center; }
+
+      #s5 .av-summary { margin-top: 24px; }
+      .av-summary-row { padding: 14px 16px; }
+      .av-row-between { gap: 14px; }
+    }
+
+    @media (max-width: 360px) {
+      .av-scale-lbl { display: none; }
+      .av-scale-btn { padding: 16px 4px; }
+    }
+
+    /* ── Reduced motion ──────────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      .av-blob, .av-pill.av-pill-lg, #av-float, #av-card, .av-logo-chip { animation: none; }
+      .av-screen.active { animation-duration: 0.01s; }
+    }
+  </style>
+</head>
+<body>
+  <div id="av-root">
+    <canvas id="av-canvas"></canvas>
+    <div class="av-blob av-blob-1"></div>
+    <div class="av-blob av-blob-2"></div>
+    <div class="av-blob av-blob-3"></div>
+
+    <div id="av-progress-track"><div id="av-progress-fill"></div></div>
+
+    <header id="av-header">
+      <div class="av-logo-chip"><img src="arte-visual-logo.svg" alt="Arte/Visual" /></div>
+      <span id="av-progress-label"></span>
+    </header>
+
+    <main id="av-main">
+      <div id="av-float">
+        <div id="av-card">
+          <button id="av-back" style="display:none;">← Atrás</button>
+
+          <!-- S0: Intro -->
+          <div id="s0" class="av-screen active">
+            <div class="av-kicker"><span class="rule"></span><span class="lbl">Encuesta de experiencia</span></div>
+            <h1 class="av-h1">Tu mirada da <em>forma</em> a lo que hacemos.</h1>
+            <p class="av-intro-desc">Nos encantaría saber cómo fue trabajar con Arte/Visual. Son solo <strong>4 preguntas</strong> — menos de 2 minutos.</p>
+            <div class="av-start-wrap">
+              <button id="btn-start" class="av-pill av-pill-lg">Comenzar →</button>
+            </div>
+            <div class="av-note">Tus respuestas son confidenciales.</div>
+          </div>
+
+          <!-- S1: Escala 1-5 -->
+          <div id="s1" class="av-screen">
+            <span class="av-index">01</span>
+            <div class="av-kicker"><span class="rule"></span><span class="lbl">Pregunta 01</span></div>
+            <h2 class="av-h2">¿Qué tan <em>satisfecho/a</em> estás con nuestro servicio?</h2>
+            <p class="av-sub">Del 1 al 5, siendo 5 la máxima satisfacción.</p>
+            <div class="av-scale-wrap" id="scale-wrap"></div>
+            <div class="av-hint">Pulsa 1–5 en tu teclado o haz clic</div>
+          </div>
+
+          <!-- S2: Texto libre -->
+          <div id="s2" class="av-screen">
+            <span class="av-index">02</span>
+            <div class="av-kicker"><span class="rule"></span><span class="lbl">Pregunta 02</span></div>
+            <h2 class="av-h2">¿Qué es lo que más <em>valoras</em> del trabajo que realizamos?</h2>
+            <p class="av-sub">Creatividad, resultados, acompañamiento, tranquilidad… lo que más resuene contigo.</p>
+            <textarea id="q2-input" class="av-textarea" placeholder="Escribe aquí…"></textarea>
+            <div class="av-row-end">
+              <button id="btn-continue2" class="av-pill av-pill-disabled">Continuar →</button>
+            </div>
+          </div>
+
+          <!-- S3: Opción única -->
+          <div id="s3" class="av-screen">
+            <span class="av-index">03</span>
+            <div class="av-kicker"><span class="rule"></span><span class="lbl">Pregunta 03</span></div>
+            <h2 class="av-h2">En relación a los procesos de trabajo, ¿cómo te <em>sentís</em> hoy?</h2>
+            <div class="av-choices" id="choices-wrap"></div>
+          </div>
+
+          <!-- S4: Texto opcional -->
+          <div id="s4" class="av-screen">
+            <span class="av-index">04</span>
+            <div class="av-kicker"><span class="rule"></span><span class="lbl">Pregunta 04 · Opcional</span></div>
+            <h2 class="av-h2">¿Hay algo que te gustaría <em>mejorar</em> o ajustar?</h2>
+            <p class="av-sub">Toda sugerencia nos ayuda a crecer. Si no tienes nada, puedes omitir.</p>
+            <textarea id="q4-input" class="av-textarea av-textarea-sm" placeholder="Escribe aquí… (opcional)"></textarea>
+            <div class="av-row-between">
+              <button id="btn-skip4" class="av-skip">Omitir</button>
+              <button id="btn-finish" class="av-pill">Finalizar →</button>
+            </div>
+          </div>
+
+          <!-- S5: Cierre / resumen -->
+          <div id="s5" class="av-screen">
+            <div class="av-check">✓</div>
+            <h2 class="av-thanks-head">¡Gracias por tu tiempo!</h2>
+            <p class="av-thanks-sub">Tu feedback está listo. Revisa el resumen y pulsa enviar para hacérnoslo llegar.</p>
+            <div class="av-summary">
+              <div class="av-summary-row">
+                <div class="av-summary-label">Satisfacción</div>
+                <div class="av-summary-value bold" id="sum-q1">—</div>
+              </div>
+              <div class="av-summary-row">
+                <div class="av-summary-label">Lo que más valoras</div>
+                <div class="av-summary-value" id="sum-q2">—</div>
+              </div>
+              <div class="av-summary-row">
+                <div class="av-summary-label">Procesos de trabajo</div>
+                <div class="av-summary-value" id="sum-q3">—</div>
+              </div>
+              <div class="av-summary-row">
+                <div class="av-summary-label">Mejoras sugeridas</div>
+                <div class="av-summary-value" id="sum-q4">—</div>
+              </div>
+            </div>
+            <div class="av-send-wrap">
+              <button id="btn-send" class="av-pill av-pill-send">Enviar respuestas</button>
+              <button id="btn-restart" class="av-restart">Editar / volver a empezar</button>
+            </div>
+          </div>
+
+        </div><!-- /av-card -->
+      </div><!-- /av-float -->
+    </main>
+
+    <footer id="av-footer">© 2026 Arte<b>/</b>Visual · Todos los derechos reservados</footer>
+  </div><!-- /av-root -->
+
+  <script>
+  (() => {
+    'use strict';
+
+    // ── PEGÁ AQUÍ LA URL DEL WEB APP después de hacer el deploy en Apps Script ──
+    const SCRIPT_URL = 'PEGAR_URL_DEL_WEB_APP_AQUÍ';
+    const STORAGE_KEY = 'av_survey_v1';
+
+    const SCALE_LABELS = {
+      1: 'Muy insatisfecho', 2: 'Insatisfecho', 3: 'Neutral',
+      4: 'Satisfecho', 5: 'Muy satisfecho'
+    };
+    const CHOICES = [
+      'Muy al tanto y conforme',
+      'Bien, aunque me gustaría entender un poco más el proceso',
+      'Prefiero que esté optimizado y no involucrarme demasiado',
+      'Siento que podría estar mejor informado/a'
+    ];
+    const CHOICE_LETTERS = ['A','B','C','D'];
+
+    let state = { screen: 0, answers: { q1: null, q2: '', q3: null, q4: '' } };
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+        if (saved && saved.answers) {
+          state = {
+            screen: saved.screen || 0,
+            answers: Object.assign({ q1: null, q2: '', q3: null, q4: '' }, saved.answers)
+          };
+        }
+      } catch(e) {}
+    }
+    function persist() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+    }
+
+    const card        = document.getElementById('av-card');
+    const backBtn     = document.getElementById('av-back');
+    const progressFill = document.getElementById('av-progress-fill');
+    const progressLabel = document.getElementById('av-progress-label');
+    const scaleWrap   = document.getElementById('scale-wrap');
+    const choicesWrap = document.getElementById('choices-wrap');
+    const q2Input     = document.getElementById('q2-input');
+    const q4Input     = document.getElementById('q4-input');
+    const cont2Btn    = document.getElementById('btn-continue2');
+    const screens     = [0,1,2,3,4,5].map(i => document.getElementById('s' + i));
+
+    function renderScale() {
+      scaleWrap.innerHTML = '';
+      for (let v = 1; v <= 5; v++) {
+        const btn = document.createElement('button');
+        btn.className = 'av-scale-btn' + (state.answers.q1 === v ? ' selected' : '');
+        btn.type = 'button';
+        btn.innerHTML = '<span class="av-scale-num">' + v + '</span>' +
+                        '<span class="av-scale-lbl">' + SCALE_LABELS[v] + '</span>';
+        btn.addEventListener('click', () => selectScale(v));
+        scaleWrap.appendChild(btn);
+      }
+    }
+    function renderChoices() {
+      choicesWrap.innerHTML = '';
+      CHOICES.forEach((text, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'av-choice-btn' + (state.answers.q3 === text ? ' selected' : '');
+        btn.type = 'button';
+        btn.innerHTML = '<span class="av-chip">' + CHOICE_LETTERS[i] + '</span><span>' + text + '</span>';
+        btn.addEventListener('click', () => selectChoice(text));
+        choicesWrap.appendChild(btn);
+      });
+    }
+    function updateSummary() {
+      const a = state.answers;
+      document.getElementById('sum-q1').textContent = a.q1 ? (a.q1 + ' / 5 · ' + SCALE_LABELS[a.q1]) : '—';
+      document.getElementById('sum-q2').textContent = (a.q2 || '').trim() || '—';
+      document.getElementById('sum-q3').textContent = a.q3 || '—';
+      document.getElementById('sum-q4').textContent = (a.q4 || '').trim() || '— sin comentarios';
+    }
+
+    let _advanceTimeout = null;
+    function goTo(n) {
+      const prev = state.screen;
+      state.screen = n;
+      persist();
+
+      if (prev === 2) q2Input.value = state.answers.q2;
+      if (prev === 4) q4Input.value = state.answers.q4;
+
+      if (n === 1) renderScale();
+      if (n === 3) renderChoices();
+      if (n === 5) updateSummary();
+      if (n === 2) q2Input.value = state.answers.q2;
+      if (n === 4) q4Input.value = state.answers.q4;
+
+      updateContinue2Style();
+
+      screens.forEach((el, idx) => {
+        el.classList.remove('active');
+        if (idx === n) { void el.offsetWidth; el.classList.add('active'); }
+      });
+
+      backBtn.style.display = (n >= 1 && n <= 4) ? '' : 'none';
+
+      const pct = n <= 0 ? 0 : n >= 5 ? 100 : (n / 4) * 100;
+      progressFill.style.width = pct + '%';
+
+      if (n >= 1 && n <= 4) progressLabel.textContent = '0' + n + ' / 04';
+      else if (n >= 5) progressLabel.textContent = 'Completado';
+      else progressLabel.textContent = '';
+
+      card.style.setProperty('--rx', '0deg');
+      card.style.setProperty('--ry', '0deg');
+    }
+
+    function updateContinue2Style() {
+      const hasText = (state.answers.q2 || '').trim().length > 0;
+      cont2Btn.classList.toggle('av-pill-disabled', !hasText);
+    }
+
+    function selectScale(v) {
+      state.answers.q1 = v; persist(); renderScale();
+      clearTimeout(_advanceTimeout);
+      _advanceTimeout = setTimeout(() => goTo(2), 460);
+    }
+    function selectChoice(text) {
+      state.answers.q3 = text; persist(); renderChoices();
+      clearTimeout(_advanceTimeout);
+      _advanceTimeout = setTimeout(() => goTo(4), 460);
+    }
+
+    function setSendState(state) {
+      const btn = document.getElementById('btn-send');
+      if (state === 'loading') {
+        btn.textContent = 'Enviando…';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        btn.style.cursor = 'wait';
+      } else if (state === 'ok') {
+        btn.textContent = '✓ Enviado';
+        btn.disabled = true;
+        btn.style.opacity = '1';
+        btn.style.background = '#1a7a3a';
+      } else if (state === 'error') {
+        btn.textContent = 'Reintentar';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+      } else {
+        btn.textContent = 'Enviar respuestas';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+      }
+    }
+
+    function send() {
+      const a = state.answers;
+      const payload = {
+        q1: a.q1,
+        q2: (a.q2 || '').trim(),
+        q3: a.q3,
+        q4: (a.q4 || '').trim(),
+        ref: document.referrer || window.location.href,
+      };
+
+      setSendState('loading');
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',   // Apps Script no devuelve CORS headers en doPost
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload),
+      })
+      .then(() => {
+        // no-cors siempre llega aquí si no hay error de red
+        setSendState('ok');
+        // Limpiar localStorage una vez enviado
+        try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+      })
+      .catch(() => {
+        setSendState('error');
+      });
+    }
+
+    document.getElementById('btn-start').addEventListener('click', () => goTo(1));
+    backBtn.addEventListener('click', () => { if (state.screen > 0) goTo(state.screen - 1); });
+    q2Input.addEventListener('input', (e) => { state.answers.q2 = e.target.value; persist(); updateContinue2Style(); });
+    q4Input.addEventListener('input', (e) => { state.answers.q4 = e.target.value; persist(); });
+    cont2Btn.addEventListener('click', () => { if ((state.answers.q2 || '').trim()) goTo(3); });
+    document.getElementById('btn-skip4').addEventListener('click', () => goTo(5));
+    document.getElementById('btn-finish').addEventListener('click', () => goTo(5));
+    document.getElementById('btn-send').addEventListener('click', send);
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      state = { screen: 0, answers: { q1: null, q2: '', q3: null, q4: '' } };
+      persist(); goTo(0);
+    });
+
+    window.addEventListener('keydown', (e) => {
+      const s = state.screen;
+      if (s === 0 && e.key === 'Enter') goTo(1);
+      else if (s === 1 && e.key >= '1' && e.key <= '5') selectScale(parseInt(e.key, 10));
+      else if (s === 2 && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if ((state.answers.q2 || '').trim()) goTo(3); }
+      else if (s === 4 && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); goTo(5); }
+    });
+
+    // ── Pointer: cursor tilt (desktop) layered on top of the autonomous float ──
+    const pointer = { x: -9999, y: -9999, active: false };
+    const isCoarse = window.matchMedia('(pointer: coarse)').matches;
+
+    window.addEventListener('pointermove', (e) => {
+      pointer.x = e.clientX; pointer.y = e.clientY; pointer.active = true;
+      if (!isCoarse && window.innerWidth > 520) {
+        const x = (e.clientX / window.innerWidth) - 0.5;
+        const y = (e.clientY / window.innerHeight) - 0.5;
+        card.style.setProperty('--ry', (x * 10).toFixed(2) + 'deg');
+        card.style.setProperty('--rx', (-y * 7).toFixed(2) + 'deg');
+      }
+    });
+    document.addEventListener('mouseleave', () => {
+      pointer.active = false; pointer.x = pointer.y = -9999;
+      card.style.setProperty('--rx', '0deg');
+      card.style.setProperty('--ry', '0deg');
+    });
+    window.addEventListener('pointerdown', (e) => {
+      for (const p of pts) {
+        const dx = p.x - e.clientX, dy = p.y - e.clientY;
+        const d = Math.hypot(dx, dy);
+        if (d < 220 && d > 0.01) {
+          const force = (1 - d / 220) * 3.2;
+          p.vx += (dx / d) * force; p.vy += (dy / d) * force;
+        }
+      }
+    });
+
+    // ── Interactive particle field ─────────────────────────────────
+    const canvas = document.getElementById('av-canvas');
+    const ctx = canvas.getContext('2d');
+    let dpr = 1, pts = [];
+    const POINTER_RADIUS = 200, POINTER_RADIUS2 = POINTER_RADIUS * POINTER_RADIUS;
+
+    function resizeCanvas() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+    }
+    function initParticles() {
+      resizeCanvas();
+      const N = Math.max(28, Math.min(64, Math.floor(window.innerWidth / 24)));
+      pts = Array.from({ length: N }, () => ({
+        x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight,
+        vx: (Math.random() - 0.5) * 0.28, vy: (Math.random() - 0.5) * 0.28,
+        r: Math.random() * 2.2 + 0.8, red: Math.random() < 0.55
+      }));
+    }
+    function particleLoop() {
+      const W = window.innerWidth, H = window.innerHeight;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+
+      if (pointer.active) {
+        const g = ctx.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, POINTER_RADIUS * 1.4);
+        g.addColorStop(0, 'rgba(222,10,20,0.10)');
+        g.addColorStop(0.5, 'rgba(222,10,20,0.04)');
+        g.addColorStop(1, 'rgba(222,10,20,0)');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      }
+
+      for (const p of pts) {
+        if (pointer.active) {
+          const mx = pointer.x - p.x, my = pointer.y - p.y;
+          const md2 = mx * mx + my * my;
+          if (md2 < POINTER_RADIUS2 && md2 > 1) {
+            const pull = (1 - Math.sqrt(md2) / POINTER_RADIUS) * 0.06;
+            p.vx += mx * pull * 0.02; p.vy += my * pull * 0.02;
+          }
+        }
+        p.x += p.vx; p.y += p.vy;
+        p.vx *= 0.985; p.vy *= 0.985;
+        const sp = Math.hypot(p.vx, p.vy);
+        if (sp < 0.12) { p.vx += (Math.random() - 0.5) * 0.06; p.vy += (Math.random() - 0.5) * 0.06; }
+        if (p.x < -20) p.x = W + 20; if (p.x > W + 20) p.x = -20;
+        if (p.y < -20) p.y = H + 20; if (p.y > H + 20) p.y = -20;
+      }
+
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const a = pts[i], b = pts[j];
+          const dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy;
+          if (d2 < 14400) {
+            const al = (1 - Math.sqrt(d2) / 120) * 0.13;
+            ctx.strokeStyle = 'rgba(222,10,20,' + al.toFixed(3) + ')';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+          }
+        }
+      }
+
+      if (pointer.active) {
+        for (const p of pts) {
+          const dx = p.x - pointer.x, dy = p.y - pointer.y, d2 = dx * dx + dy * dy;
+          if (d2 < POINTER_RADIUS2) {
+            const al = (1 - Math.sqrt(d2) / POINTER_RADIUS) * 0.45;
+            ctx.strokeStyle = 'rgba(222,10,20,' + al.toFixed(3) + ')';
+            ctx.lineWidth = 1.1;
+            ctx.beginPath(); ctx.moveTo(pointer.x, pointer.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+          }
+        }
+      }
+
+      for (const p of pts) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832);
+        ctx.fillStyle = p.red ? 'rgba(222,10,20,0.5)' : 'rgba(46,40,40,0.32)';
+        ctx.fill();
+      }
+      requestAnimationFrame(particleLoop);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // ── Boot ───────────────────────────────────────────────────────
+    loadState();
+    initParticles();
+    particleLoop();
+    // Always open on the intro for a clean first impression; answers stay
+    // remembered within the session so navigating back keeps what was typed.
+    goTo(0);
+  })();
+  </script>
+</body>
+</html>
