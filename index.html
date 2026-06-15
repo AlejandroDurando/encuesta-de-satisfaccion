@@ -73,9 +73,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       background: radial-gradient(120% 90% at 50% -10%, #fdfbfa 0%, #f1e9e7 55%, #e8dedb 100%);
-      padding: 104px 20px 70px;
+      padding: 104px 20px 0;
     }
     #av-canvas {
       position: absolute; inset: 0; width: 100%; height: 100%;
@@ -132,17 +132,22 @@
 
     /* ── Footer ──────────────────────────────────────────────────── */
     #av-footer {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      text-align: center; padding: 16px 16px 18px;
+      width: 100%;
+      text-align: center;
+      padding: 20px 16px 28px;
       font-family: 'Manrope', sans-serif; font-size: 12.5px; font-weight: 600;
       letter-spacing: 0.05em; color: var(--muted); z-index: 14;
-      pointer-events: none;
+      margin-top: 8px;
     }
     #av-footer b { color: var(--accent); font-weight: 800; font-style: normal; }
 
     /* ── Stage / float / card ────────────────────────────────────── */
-    #av-main { position: relative; z-index: 5; width: 100%; max-width: 720px; perspective: 1600px; }
+    #av-main {
+      position: relative; z-index: 5; width: 100%; max-width: 720px; perspective: 1600px;
+      flex: 1; display: flex; align-items: center; padding: 20px 0;
+    }
     #av-float {
+      width: 100%;
       animation: av-float 13s ease-in-out infinite;
       will-change: transform;
     }
@@ -355,7 +360,7 @@
 
     /* ── Tablet ──────────────────────────────────────────────────── */
     @media (max-width: 760px) {
-      #av-root { padding: 92px 16px 34px; }
+      #av-root { padding: 80px 16px 0; }
       #av-header { padding: 18px 20px; }
       .av-logo-chip { padding: 11px 18px; }
       .av-logo-chip img { height: 54px; }
@@ -365,7 +370,7 @@
 
     /* ── Mobile ──────────────────────────────────────────────────── */
     @media (max-width: 520px) {
-      #av-root { padding: 84px 12px 28px; }
+      #av-root { padding: 72px 12px 0; }
       #av-header { padding: 14px 14px; }
       .av-logo-chip { padding: 9px 15px; border-radius: 14px; }
       .av-logo-chip img { height: 46px; }
@@ -731,12 +736,17 @@
 
     window.addEventListener('pointermove', (e) => {
       pointer.x = e.clientX; pointer.y = e.clientY; pointer.active = true;
-      if (!isCoarse && window.innerWidth > 520) {
-        const x = (e.clientX / window.innerWidth) - 0.5;
-        const y = (e.clientY / window.innerHeight) - 0.5;
-        card.style.setProperty('--ry', (x * 10).toFixed(2) + 'deg');
-        card.style.setProperty('--rx', (-y * 7).toFixed(2) + 'deg');
-      }
+    });
+
+    // Card-relative tilt: strongest at the card's own edges, fades when cursor leaves
+    document.addEventListener('mousemove', (e) => {
+      if (isCoarse || window.innerWidth <= 520) return;
+      const rect = card.getBoundingClientRect();
+      // Position relative to card center, clamped to card bounds
+      const x = Math.max(-0.5, Math.min(0.5, (e.clientX - rect.left) / rect.width - 0.5));
+      const y = Math.max(-0.5, Math.min(0.5, (e.clientY - rect.top) / rect.height - 0.5));
+      card.style.setProperty('--ry', (x * 20).toFixed(2) + 'deg');
+      card.style.setProperty('--rx', (-y * 14).toFixed(2) + 'deg');
     });
     document.addEventListener('mouseleave', () => {
       pointer.active = false; pointer.x = pointer.y = -9999;
