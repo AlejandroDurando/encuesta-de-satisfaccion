@@ -690,24 +690,17 @@
 
       setSendState('loading');
 
-      // Enviamos como GET con el payload en la URL — evita problemas de CORS/redirect con Apps Script
+      // no-cors: el browser no puede leer la respuesta pero el request SÍ llega a Apps Script
       const url = new URL(SCRIPT_URL);
       url.searchParams.set('payload', JSON.stringify(payload));
 
-      fetch(url.toString())
-        .then(r => r.json())
-        .then(result => {
-          if (result.ok) {
-            setSendState('ok');
-            try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
-          } else {
-            setSendState('error');
-          }
-        })
-        .catch(() => {
-          // Si falla CORS igual intentamos — Apps Script a veces responde opaco
+      fetch(url.toString(), { mode: 'no-cors' })
+        .then(() => {
           setSendState('ok');
           try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+        })
+        .catch(() => {
+          setSendState('error');
         });
     }
 
