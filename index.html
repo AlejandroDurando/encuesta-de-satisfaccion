@@ -111,17 +111,11 @@
     }
     .av-logo-chip {
       display: inline-flex; align-items: center;
-      padding: 12px 20px; border-radius: 16px;
-      background: rgba(255,255,255,0.78);
-      backdrop-filter: blur(12px) saturate(1.4);
-      -webkit-backdrop-filter: blur(12px) saturate(1.4);
-      border: 1px solid rgba(222,10,20,0.14);
-      animation: av-logo-glow 4.5s ease-in-out infinite;
       transition: transform 0.25s ease;
     }
     .av-logo-chip:hover { transform: translateY(-2px); }
     .av-logo-chip img {
-      height: 64px; width: auto; display: block;
+      height: 76px; width: auto; display: block;
       filter: drop-shadow(0 3px 10px rgba(222,10,20,0.30));
     }
     #av-progress-label {
@@ -362,8 +356,7 @@
     @media (max-width: 760px) {
       #av-root { padding: 80px 16px 0; }
       #av-header { padding: 18px 20px; }
-      .av-logo-chip { padding: 11px 18px; }
-      .av-logo-chip img { height: 54px; }
+      .av-logo-chip img { height: 64px; }
       #av-main { perspective: 1300px; }
       #av-card { border-radius: 20px; min-height: 0; padding: 42px 24px 32px; }
     }
@@ -372,8 +365,7 @@
     @media (max-width: 520px) {
       #av-root { padding: 72px 12px 0; }
       #av-header { padding: 14px 14px; }
-      .av-logo-chip { padding: 9px 15px; border-radius: 14px; }
-      .av-logo-chip img { height: 46px; }
+      .av-logo-chip img { height: 54px; }
       #av-progress-label { font-size: 10px; letter-spacing: 0.18em; }
 
       #av-main { perspective: 1000px; }
